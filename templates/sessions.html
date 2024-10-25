@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% set page_title = "Sessions" %}
+{% set help_file = "md/Sessions.md" %}
+
+
+{% block toolbar %}
+    <div class="navbar navbar-expand bg-gray-800 justify-content-between px-2">
+        <div class="align-items-center">
+            <div class="form-inline">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa fa-fw fa-search"></i></span>
+                    <input type="text" class="form-control" name="search-text" placeholder="Enter a name..." autocomplete="off" fv-regex="{{ common.session_name_regex }}" fv-warning="Only alphanumerics, hypens, and underscores are allowed.">
+                    <a class="btn btn-primary" onclick="fnGo();"><i class="fa fa-fw fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block navbar_spacing %}
+    <div class="navbar-spacing"></div>
+{% endblock %}
+
+
+{% block body %}
+    <div class="row m-0">
+        <div class="col-lg-12 p-0">
+            {% for session in common.sessions %}
+                <div class="py-3 border-bottom cursor-pointer highlight-hover" data-session="{{ session.session_name }}" onclick="fnGo(this);">
+                <table class="w-100">
+                    <tbody>
+                        <tr>
+                            <td class="w-1 px-3">
+                                <i class="fa fa-fw fa-{{ session.session_name[0].lower() }}"></i>
+                            </td>
+                            <td class="">
+                                <div>
+                                    <div>
+                                        <span class="fw-bold">{{ session.session_name }}</span>
+                                    </div>
+                                    <div class="text-muted">
+                                        <span>{{ session.channel_topic }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="w-1 px-3">
+                                <i class="fa fa-fw fa-chevron-right"></i>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        $(function() {
+            fnGo = function(x = null)
+            {
+                if (x !== null)
+                {
+                    x = $(x);
+                    var session = x.attr("data-session");
+                    if (session)
+                        window.location.href = `/session/${session}`;
+
+                    return;
+                }
+
+                var name = $("[name='search-text']").first()
+                    .val()
+                    .trim();
+
+                FormValidator.onPass(function() {
+                    window.location.href = `/session/${name}`;
+                });
+            };
+
+            fnBind = function()
+            {
+                $(document).on("keyup", function(e) {
+                    if (e.keyCode == 13)
+                        if ($("[name='search-text']").is(":focus"))
+                            fnGo();
+                });
+
+                $("[name='search-text']").on("input", function() {
+                    elem = $(this);
+                    text1 = elem.val();
+
+                    $("[data-session]").each(function(i, x) {
+                        x = $(x);
+                        text2 = x.text();
+
+                        x.hide();
+                        //if (text2.match(new RegExp(text1)))
+                        if (text2.hasWords(text1))
+                            x.show();
+                    });
+                });
+            };
+
+            fnBind();
+        });
+    </script>
+{% endblock %}

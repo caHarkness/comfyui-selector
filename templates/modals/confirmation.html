@@ -1,0 +1,115 @@
+{% set modal_id = "ConfirmationModal" %}
+
+{% set default_modal_content_classes = "modal-content" %}
+{% set default_btn_dismiss_classes = "btn btn-sm btn-dismiss me-1" %}
+{% set default_btn_confirm_classes = "btn btn-sm btn-confirm" %}
+{% set default_btn_dismiss_caption = "Close" %}
+{% set default_btn_confirm_caption = "Confirm" %}
+
+<div class="modal fade" id="{{ modal_id }}">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="{{ default_modal_content_classes }}">
+            <div class="modal-body">
+                <div class="modal-message">Are you sure?</div>
+
+                <div class="text-start mt-3">
+                    <a class="{{ default_btn_dismiss_classes }}" data-bs-dismiss="modal">{{ default_btn_dismiss_caption }}</a>
+                    <a class="{{ default_btn_confirm_classes }}" onclick="{{ modal_id }}.fnConfirm();">{{ default_btn_confirm_caption }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function() {
+        {{ modal_id }} = {};
+
+        {{ modal_id }}.fnReset = function()
+        {
+            $("#{{ modal_id }}")
+                .find(".modal-content")
+                .first()
+                .css("zIndex", "-1000000000")
+                .attr("class", "")
+                .addClass("{{ default_modal_content_classes }}");
+
+            $("#{{ modal_id }}")
+                .find(".btn-dismiss")
+                .first()
+                .attr("class", "")
+                .addClass("{{ default_btn_dismiss_classes }}")
+                .html("{{ default_btn_dismiss_caption }}");
+
+            $("#{{ modal_id }}")
+                .find(".btn-confirm")
+                .first()
+                .attr("class", "")
+                .addClass("{{ default_btn_confirm_classes }}")
+                .html("{{ default_btn_confirm_caption }}");
+        };
+
+        {{ modal_id }}.fnShow = function(message, options = {})
+        {
+            {{ modal_id }}.fnReset();
+
+            if (!options.theme)
+                options.theme = "secondary";
+
+            if (options.dismissCaption)
+                $("#{{ modal_id }}")
+                    .find(".btn-dismiss")
+                    .first()
+                    .html(options.dismissCaption);
+
+            if (options.confirmCaption)
+                $("#{{ modal_id }}")
+                    .find(".btn-confirm")
+                    .first()
+                    .html(options.confirmCaption);
+
+            if (options.theme !== null)
+            {
+                $("#{{ modal_id }}")
+                    .find(".modal-content")
+                    .first()
+                    .addClass(`border-${options.theme} bg-${options.theme}-subtle text-${options.theme}-subtle`);
+
+                $("#{{ modal_id }}")
+                    .find(".btn-dismiss")
+                    .first()
+                    .addClass(`btn-outline-${options.theme}`);
+
+                $("#{{ modal_id }}")
+                    .find(".btn-confirm")
+                    .first()
+                    .addClass(`btn-${options.theme}`);
+            }
+
+            $("#{{ modal_id }}")
+                .find(".modal-message")
+                .first()
+                .html(message);
+
+            if (!options.callback)
+            {
+                $("#{{ modal_id }}")
+                    .find(".btn-dismiss")
+                    .first()
+                    .removeClass("me-1");
+
+                $("#{{ modal_id }}")
+                    .find(".btn-confirm")
+                    .addClass("d-none");
+            }
+
+            $("#{{ modal_id }}").modal("show");
+
+            if (options.callback)
+                if (typeof options.callback === "function")
+                    {{ modal_id }}.fnConfirm = options.callback;
+        };
+
+        {{ modal_id }}.fnConfirm = function() {};
+    });
+</script>

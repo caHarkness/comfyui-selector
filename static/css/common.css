@@ -1,0 +1,29 @@
+/* Make navbars and the required space underneath them the same size: */
+.navbar,
+.navbar-spacing {
+    height: 1.5cm;
+}
+
+/* Bootstrap-like extras: */
+.w-1 { width: 1%; }
+.bg-gray-800 { background: #343a40; }
+
+/* Bootstrap: cut off large title bar text: */
+.navbar-brand {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 95%;
+    max-width: calc(100% - 1em);
+}
+
+/* Make elements with onclick obviously clickable: */
+*[onclick] { cursor: pointer; }
+div[onclick]:hover { background: rgba(127, 127, 127, 0.0625); }
+
+/* Bootstrap: Allow modals and their backdrop to be stacked: */
+.modal-backdrop.show { opacity: 0; }
+.modal { background: rgba(0, 0, 0, 0.5); }
+
+/* Remove the top border from list-like elements with a Bootstrap "border-top" class: */
+.border-top-li:first-child { border-top: 0 !important; }

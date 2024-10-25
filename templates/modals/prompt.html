@@ -1,0 +1,67 @@
+{% set modal_id = "PromptModal" %}
+
+<div class="modal fade" id="{{ modal_id }}">
+    <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-body">
+                <label class="mb-2">Prompt</label>
+                <textarea class="form-control" name="user-input-full"></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <div class="text-end">
+                    <a class="btn btn-outline-secondary" onclick="{{ modal_id }}.fnClose();">Close</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function() {
+        {{ modal_id }} = {};
+
+        {{ modal_id }}.userInput        = $("[name='user-input']").first();
+        {{ modal_id }}.userInputFull    = $("[name='user-input-full']").first();
+
+
+        {{ modal_id }}.fnShow = function()
+        {
+            $("#{{ modal_id }}").modal("show");
+            var userInput       = {{ modal_id }}.userInput;
+            var userInputFull   = {{ modal_id }}.userInputFull;
+            userInputFull.val(userInput.val());
+
+            setTimeout(function() {
+                Input.fnSetTextareaHeight();
+            }, 250);
+        };
+
+        {{ modal_id }}.fnClose = function()
+        {
+            $("#{{ modal_id }}").modal("hide");
+            var userInput       = {{ modal_id }}.userInput;
+            var userInputFull   = {{ modal_id }}.userInputFull;
+            userInput.val(userInputFull.val());
+
+            SessionPage.fnSaveInput();
+        };
+
+        Input = {};
+        Input.fnSetTextareaHeight = function()
+        {
+            $("textarea").each(function(i, x) {
+                x = $(x);
+
+                x.css("minHeight", "0px");
+                x.css(
+                    "minHeight",
+                    x[0].scrollHeight +
+                        parseInt(x.css("paddingTop")) +
+                        parseInt(x.css("paddingBottom")) +
+                        "px"
+                    );
+            });
+        };
+    });
+</script>

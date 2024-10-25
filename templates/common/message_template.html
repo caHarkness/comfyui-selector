@@ -1,0 +1,61 @@
+<style>
+    div.message-template-instance div[name="body"]
+    {
+        text-align: left;
+        max-width: 75%;
+        padding: 1em;
+        display: inline-block;
+    }
+
+    div.message-template-instance {
+        margin-bottom: 1em;
+    }
+
+    div.message-template-instance.query {
+        text-align: right;
+        margin-left: auto;
+        margin-right: 0;
+    }
+
+    /* Give the chat an iMessage-like appearance: */
+    div.message-template-instance div[name="body"] { border-radius: 2em; }
+    div.message-template-instance.query div[name="body"] { border-bottom-right-radius: 0; }
+    div.message-template-instance.reply div[name="body"] { border-bottom-left-radius: 0; }
+    div.message-template-instance div.message-footer { line-height: 1; }
+
+
+    div.message-template-instance div[name="body"] img {
+        width: auto;
+        height: auto;
+        max-width: 75%;
+        /*max-height: 2in;*/
+        /*display: inline-block;*/
+        display: inline-block;
+        padding: 0;
+        margin: 0;
+
+    }
+
+    div.message-template-instance div[name="body"] img:first-child {
+        border-top-left-radius: 1em;
+        border-top-right-radius: 1em;
+    }
+
+    div.message-template-instance div[name="body"] img:last-child {
+        border-bottom-left-radius: 1em;
+        border-bottom-right-radius: 1em;
+    }
+</style>
+
+<div class="message-template d-none message-template-instance">
+    <div class="mb-0" name="body">No message content...</div>
+    <div class="message-images"></div>
+    
+    <div class="message-footer text-muted align-text-top">
+        <small>
+            <span class="message-author" name="author">nobody</span>
+        </small>
+    </div>
+    
+    <div class="message-control-container"></div>
+</div>

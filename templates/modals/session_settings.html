@@ -1,0 +1,66 @@
+{% set modal_id = "SessionSettingsModal" %}
+
+<div class="modal fade" id="{{ modal_id }}">
+    <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="mb-4">
+                    <label class="mb-2">Category</label>
+                    <input type="text" class="form-control" name="category" placeholder="e.g. General" value="{{ common.category }}" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="mb-2">Channel Topic</label>
+                    <input type="text" class="form-control" name="channel_topic" placeholder="e.g. workflow, anythingv3" value="{{ common.channel_topic }}" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="mb-2">User</label>
+                    <input type="text" class="form-control" name="user" placeholder="e.g. caharkness" value="{{ common.user }}" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="mb-2">User Roles</label>
+                    <input type="text" class="form-control" name="user_roles" placeholder="e.g. caharkness" value="{{ common.user_roles }}" />
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <div class="text-end">
+                    <a class="btn btn-outline-secondary" onclick="{{ modal_id }}.fnClose();">Close</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function() {
+        {{ modal_id }} = {};
+
+        {{ modal_id }}.fnShow = function()
+        {
+            $("#{{ modal_id }}").modal("show");
+        };
+
+        {{ modal_id }}.fnClose = function()
+        {
+            $("#{{ modal_id }}").modal("hide");
+
+            $.ajax({
+                url: "/v1/save_session/{{ common.session_name }}",
+                type: "post",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    "category":         $("[name='category']").first().val(),
+                    "channel_topic":    $("[name='channel_topic']").first().val(),
+                    "user":             $("[name='user']").first().val(),
+                    "user_roles":       $("[name='user_roles']").first().val()
+                }),
+                success: function(data)
+                {
+                }
+            });
+        };
+    });
+</script>

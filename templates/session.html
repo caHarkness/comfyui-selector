@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% set page_title = common.session_name %}
+{% set help_file = "md/Session.md" %}
+
+
+{% block action %}
+    <a class="btn btn-outline-secondary border-0 p-2" href="/"><i class="fa fa-fw fa-arrow-left"></i></a>
+{% endblock %}
+
+
+{% block options %}
+    <a class="dropdown-item" onclick="SessionSettingsModal.fnShow();">
+        <i class="fa fa-fw fa-cog me-3"></i>
+        <span>Settings</span>
+    </a>
+{% endblock %}
+
+
+{% block toolbar %}
+    <div class="navbar navbar-expand bg-gray-800 justify-content-between px-2">
+        <div class="align-items-center">
+            <div class="form-inline">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa fa-fw fa-search"></i></span>
+                    <input type="text" class="form-control" name="search-text" placeholder="Search messages..." autocomplete="off">
+                    <a class="btn btn-secondary" onclick="SessionPage.fnClearSearch();"><i class="fa fa-fw fa-xmark"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block navbar_spacing %}
+    <div class="navbar-spacing"></div>
+{% endblock %}
+
+
+{% block body %}
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="mt-3 mb-5">
+                    <div class="text-center text-muted">This is the beginning of the conversation.</div>
+                </div>
+
+                <div class="w-100" id="messages"></div>
+            </div>
+        </div>
+    </div>
+
+    {% include "common/message_template.html" %}
+
+    <div>
+        <div class="navbar-spacing"></div>
+    </div>
+
+    <div class="fixed-bottom border-top bg-black">
+        <div class="navbar navbar-expand navbar-dark bg-black justify-content-between px-2">
+
+            <div class="w-100 align-items-center">
+                <div class="form-inline w-100">
+                    <div class="input-group w-100">
+                        <a class="btn btn-outline-secondary" onclick="PromptModal.fnShow();"><i class="fa fa-fw fa-edit"></i></a>
+                        <input type="text" class="form-control" name="user-input" placeholder="Type a message..." autocomplete="off">
+                        <a class="btn btn-primary" onclick="SessionPage.fnSend();"><i class="fa fa-fw fa-paper-plane"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include "modals/prompt.html" %}
+    {% include "modals/session_settings.html" %}
+
+    <!-- Page Functionality -->
+    <script src="/js/SessionPage.js"></script>
+{% endblock %}

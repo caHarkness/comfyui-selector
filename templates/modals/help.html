@@ -1,0 +1,37 @@
+{% set modal_id = "HelpModal" %}
+{% if help_file != "" %}
+    <!-- Matching help document: -->
+    <div class="modal fade" id="{{ modal_id }}">
+        <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-body">
+                    {{ md(help_file) | safe }}
+                </div>
+
+                <div class="modal-footer">
+                    <div class="text-end">
+                        <a class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(function() {
+            {{ modal_id }} = {};
+            {{ modal_id }}.fnShow = function()
+            {
+                $("#{{ modal_id }}").modal("show");
+            };
+        });
+    </script>
+{% else %}
+    <!-- No matching help document: -->
+    <script>
+        $(function() {
+            {{ modal_id }} = {};
+            {{ modal_id }}.fnShow = function() {};
+        });
+    </script>
+{% endif %}
