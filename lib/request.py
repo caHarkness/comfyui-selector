@@ -6,6 +6,7 @@ import uuid
 import random
 import os
 import copy
+import re
 
 import lib.log as log
 import lib.comfyui as comfyui
@@ -107,6 +108,33 @@ class Request:
         # user_message_json = parser.parse_input(self.user_message, self.all_options)
         # self.all_options = json_merge(self.all_options, user_message_json)
 
+        return self.all_options
+
+    def process_limitations(self):
+        all_options_clone = copy.deepcopy(self.all_options)
+
+        for key in self.all_options.keys():
+            limit_value = self.all_options[key]
+
+            term = "min_"
+            if re.search(rf"^{term}", key):
+                target_key = re.sub(rf"^{term}", "", key)
+                if target_key not in self.all_options.keys():
+                    all_options_clone[target_key] = limit_value
+                all_options_clone[key] = limit_value if self.all_options[key] < limit_value else self.all_options[key]
+
+            term = "max_"
+            if re.search(rf"^{term}", key):
+                target_key = re.sub(rf"^{term}", "", key)
+                if target_key in self.all_options.keys():
+                    all_options_clone[key] = limit_value if self.all_options[key] > limit_value else self.all_options[key]
+
+            term = "force_"
+            if re.search(rf"^{term}", key):
+                target_key = re.sub(rf"^{term}", "", key)
+                all_options_clone[target_key] = limit_value
+
+        self.all_options = all_options_clone
         return self.all_options
 
     # Process user message and merge

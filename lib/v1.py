@@ -21,38 +21,67 @@ from flask import render_template
 from flask import request
 from flask import make_response
 
-stubs = {}
+stubs       = {}
+user_times  = {}
 
 @flask_app.post("/v1/stub")
 async def v1_stub_POST():
-    stub_timestamp  = time.monotonic_ns()
-    o               = request.json
+    output_json = {}
 
-    print(json.dumps(o))
+    try:
+        stub_timestamp  = time.monotonic_ns()
+        o               = request.json
 
-    req = Request.create({
-        "category":         o["category"],
-        "channel_topic":    o["channel_topic"],
-        "user_message":     o["user_message"],
-        "user_roles":       o["user_roles"],
-        "user":             o["user"],
-        "all_options": {}
-    })
+        req = Request.create({
+            "category":         o["category"]       if "category" in o.keys()       else "None",
+            "channel_topic":    o["channel_topic"]  if "channel_topic" in o.keys()  else "None",
+            "user_message":     o["user_message"]   if "user_message" in o.keys()   else "",
+            "user_roles":       o["user_roles"]     if "user_roles" in o.keys()     else [],
+            "user":             o["user"]           if "user" in o.keys()           else "None",
+            "all_options":      o["all_options"]    if "all_options" in o.keys()    else {}
+        })
 
-    req.get_options_json()
-    req.parse_input()
-    req.get_workflow_json()
+        req.get_options_json()
+        req.parse_input()
+        req.process_limitations()
+        req.get_workflow_json()
 
-    result = {}
+        # Rate limiting:
+        if o["user"] not in user_times.keys():
+            user_times[o["user"]] = -1
 
-    if req.has_workflow_json_file():
-        result["stub"]              = stub_timestamp
-        result["all_options"]       = req.all_options
-        stubs[f"{stub_timestamp}"]  = req
+        current_time    = time.time()
+        time_diff       = current_time - user_times[o["user"]]
+        wait_time       = req.all_options["wait_time"]
 
-    print(json.dumps(result))
+        # Allow channel to dictate slowmode
+        if "slowmode_delay" in req.all_options.keys():
+            slowmode_delay = req.all_options["slowmode_delay"]
+            if int(slowmode_delay) > 0:
+                wait_time = slowmode_delay
 
-    resp = make_response(result, 200)
+        if "ignore_wait_time" in req.all_options.keys():
+            if req.all_options["ignore_wait_time"] == True:
+                wait_time = -1
+
+        time_left       = wait_time - time_diff
+        time_left       = f"{time_left:.2f}"
+
+        if time_diff < wait_time:
+            raise Exception(f"Please wait {time_left} seconds before attempting another request")
+
+        user_times[o["user"]] = current_time
+        #
+
+        if req.has_workflow_json_file():
+            output_json["stub"]         = stub_timestamp
+            output_json["all_options"]  = req.all_options
+            stubs[f"{stub_timestamp}"]  = req
+
+    except Exception as e:
+        output_json = {"error": str(e)}
+
+    resp = make_response(output_json, 200)
     resp.headers = {
         "Content-Type": "application/json"
     }
@@ -61,84 +90,82 @@ async def v1_stub_POST():
 
 @flask_app.post("/v1/process")
 async def v1_process_POST():
-    o               = request.json
-    stub_timestamp  = o["stub"]
-    req             = stubs[f"{stub_timestamp}"]
+    output_json = {}
 
-    req.get_options_json()
-    req.parse_input()
+    try:
+        o               = request.json
+        stub_timestamp  = o["stub"]
+        req             = stubs[f"{stub_timestamp}"]
 
-    print("-----")
-    print(req.all_options)
-    print("-----")
+        req.get_options_json()
+        req.parse_input()
+        req.process_limitations()
 
-    '''
+        repeat_n_times = 1
+        if "repeat_n_times" in req.all_options:
+            repeat_n_times = req.all_options["repeat_n_times"]
 
-    print(req.all_options["repeat_n_times"])
-    print("---")
-'''
+        result = {
+            "server_address":   "",
+            "output_files":     [],
+            "execution_time":   0.0
+        }
 
-    repeat_n_times = 1
-    if "repeat_n_times" in req.all_options:
-        repeat_n_times = req.all_options["repeat_n_times"]
+        for i in range(repeat_n_times):
+            req.get_workflow_json()
 
-    result = {
-        "server_address":   "",
-        "output_files":     [],
-        "execution_time":   0.0
-    }
+            output = await req.get_outputs()
 
+            result["server_address"] = output["server_address"]
+            result["execution_time"] = result["execution_time"] + output["execution_time"]
 
+            for o in output["output_files"]:
+                result["output_files"].append(o)
 
-    for i in range(repeat_n_times):
-        req.get_workflow_json()
+        result["all_options"] = req.all_options
 
-        output = await req.get_outputs()
+        if "zip_files" in req.all_options and req.all_options["zip_files"] == True:
+            file_paths  = []
+            last_path   = ""
 
-        result["server_address"] = output["server_address"]
-        result["execution_time"] = result["execution_time"] + output["execution_time"]
+            for i in range(len(result["output_files"])):
+                last_path = result["output_files"][i]["file_path"]
+                file_paths.append(last_path)
 
-        for o in output["output_files"]:
-            result["output_files"].append(o)
+            last_path   = re.sub(r"\.[A-Za-z0-9]{1,}$", ".zip", last_path)
+            zip_command = f"zip -j {last_path}"
 
-    result["all_options"] = req.all_options
+            for path in file_paths:
+                zip_command = f"{zip_command} {path}"
 
-    if "zip_files" in req.all_options and req.all_options["zip_files"] == True:
-        file_paths  = []
-        last_path   = ""
+            os.system(zip_command)
 
-        for i in range(len(result["output_files"])):
-            last_path = result["output_files"][i]["file_path"]
-            file_paths.append(last_path)
+            last_path               = re.sub(r"^static\/", "", last_path)
+            result["output_files"]  = f"{PUBLIC_ADDRESS}{last_path}"
+        else:
+            # Convert all the file_data objects to base64 for use inside a JSON string:
+            for i in range(len(result["output_files"])):
+                file_data = result["output_files"][i]["file_data"]
+                file_path = result["output_files"][i]["file_path"]
+                result["output_files"][i]["file_data"] = base64.b64encode(file_data).decode("utf-8")
+                result["output_files"][i]["file_link"] = f"{PUBLIC_ADDRESS}{file_path}"
 
-        last_path   = re.sub(r"\.[A-Za-z0-9]{1,}$", ".zip", last_path)
-        zip_command = f"zip -j {last_path}"
+        output_json = result
 
-        for path in file_paths:
-            zip_command = f"{zip_command} {path}"
+        # Remove the key we no longer need:
+        if f"{stub_timestamp}" in stubs:
+            del stubs[f"{stub_timestamp}"]
 
-        os.system(zip_command)
+    except Exception as e:
+        output_json = {"error": str(e)}
 
-        last_path               = re.sub(r"^static\/", "", last_path)
-        result["output_files"]  = f"{PUBLIC_ADDRESS}{last_path}"
-    else:
-        # Convert all the file_data objects to base64 for use inside a JSON string:
-        for i in range(len(result["output_files"])):
-            file_data = result["output_files"][i]["file_data"]
-            file_path = result["output_files"][i]["file_path"]
-            result["output_files"][i]["file_data"] = base64.b64encode(file_data).decode("utf-8")
-            result["output_files"][i]["file_link"] = f"{PUBLIC_ADDRESS}{file_path}"
-
-    resp = make_response(result, 200)
+    resp = make_response(output_json, 200)
     resp.headers = {
         "Content-Type": "application/json"
     }
 
-    # Remove the key we no longer need:
-    if f"{stub_timestamp}" in stubs:
-        del stubs[f"{stub_timestamp}"]
-
     return resp
+
 
 @flask_app.post("/v1/save_session/<session_name>")
 async def v1_save_session_sn_POST(session_name):

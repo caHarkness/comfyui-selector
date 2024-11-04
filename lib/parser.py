@@ -158,25 +158,9 @@ def parse_input(input_string, all_options={}):
             output[k] = output[f"max_{k}"] if int(output[k]) > int(output[f"max_{k}"]) else output[k]
     '''
 
-    # Only allow certain characters"
+    # Only allow certain characters
     for k in ["positive", "supporting", "negative"]:
         if k in output:
             output[k] = make_replacements(output[k], r"[^A-Za-z0-9 \-\.\(\),]", "")
-
-
-    # Process keys like "max_somekey" to set maximum "somekey"
-    starting_keys = []
-    for key in output.keys():
-        starting_keys.append(key)
-
-    for key in starting_keys:
-        if re.match(r"^max_", key):
-            max_key = key
-            target_key = key[4:]
-            # print(target_key)
-
-            if output[max_key] is not None:
-                if float(output[target_key]) > float(output[max_key]):
-                    output[target_key] = output[max_key]
 
     return output
